@@ -84,9 +84,30 @@ function typecheck(t: Term, tyEnv: TypeEnv): Type {
             }
             return funcTy.retType;
         }
+        case "seq": {
+            typecheck(t.body, tyEnv);
+            return typecheck(t.rest, tyEnv);
+        }
+        case "const": {
+            const ty = typecheck(t.init, tyEnv);
+            const newTyEnv = { ...tyEnv, [t.name]: ty };
+            return typecheck(t.rest, newTyEnv);
+        }
         default:
             throw new Error("unimplemented")
     }
 }
 
-console.dir(typecheck(parseBasic("(x: number) => x"), {}))
+console.log(
+    typecheck(
+        parseBasic(`
+            const add = (x: number, y: number) => x + y;
+            const select = (b: boolean, x: number, y: number) => b ? x : y;
+
+            const x = add(1, add(2, 3));
+            const y = select(true, x, x);
+
+            y;
+        `), {}
+    )
+);
